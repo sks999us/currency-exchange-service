@@ -14,7 +14,8 @@ import com.sks.currencyexchangeservice.repositories.CurrencyExchangeRepository;
 @RestController
 public class CurrencyExchangeController {
 
-	Logger logger = LoggerFactory.getLogger(this.getClass());
+	private Logger logger = LoggerFactory.getLogger(CurrencyExchangeController.class);
+	
 	@Autowired
 	private Environment env;
 
@@ -24,9 +25,23 @@ public class CurrencyExchangeController {
 	@GetMapping("/currency-exchange/from/{from}/to/{to}")
 	public CurrencyExchange retrieveExchangeValue(@PathVariable String from, @PathVariable String to) {
 		
-		logger.info("*****From {} , To {} ****", from, to);
+		logger.info("retrieveExchangeValue called with {} to {}", from, to);
+		//logger.info("*****From {} , To {} ****", from, to);
 		CurrencyExchange cx = rep.findByFromAndTo(from, to);
-		cx.setEnvironment(env.getProperty("local.server.port"));
+		
+		if(cx ==null) {
+			throw new RuntimeException
+				("Unable to Find data for " + from + " to " + to);
+		}
+		
+		String port = env.getProperty("local.server.port");
+		
+		//CHANGE-KUBERNETES
+		String host = env.getProperty("HOSTNAME");
+		String version = "v11";
+		
+		cx.setEnvironment(port + " " + version + " " + host);
+		
 		return cx;
 	}
 }
